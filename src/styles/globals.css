@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root, [data-theme="dark"] {
+  --bg: #0e0e10;
+  --bg2: #18181c;
+  --bg3: #222228;
+  --card: #1c1c22;
+  --border: #2e2e38;
+  --accent: #e8ff47;
+  --accent2: #ff6b35;
+  --accent3: #47c4ff;
+  --text: #f0f0f0;
+  --muted: #7a7a8a;
+  --muted2: #4a4a58;
+  --radius: 16px;
+  --nav-h: 70px;
+}
+
+[data-theme="light"] {
+  --bg: #f5f5f0;
+  --bg2: #ebebE4;
+  --bg3: #e0e0d8;
+  --card: #ffffff;
+  --border: #d8d8ce;
+  --text: #1a1a1e;
+  --muted: #8a8a9a;
+  --muted2: #c0c0cc;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body, #root {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  overflow: hidden;
+}
+
+.hide-scroll::-webkit-scrollbar { display: none; }
+.hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+input { transition: border-color .2s; }
+input:focus { border-color: var(--accent) !important; }
+button:active { opacity: 0.85; transform: scale(0.97); }
