@@ -76,10 +76,13 @@ export async function deleteEntry(entryId) {
 }
 
 // ─── STATS LEADERBOARD ───────────────────────────────
-export async function getLeaderboard() {
-  // Récupère tous les profils + toutes leurs entries
+export async function getLeaderboard(year = new Date().getFullYear()) {
   const { data: profiles } = await getAllProfiles()
-  const { data: entries } = await supabase.from('entries').select('*')
+  const { data: entries } = await supabase
+    .from('entries')
+    .select('*')
+    .gte('date', `${year}-01-01`)
+    .lte('date', `${year}-12-31`)
 
   if (!profiles || !entries) return []
 

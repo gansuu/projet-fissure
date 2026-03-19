@@ -19,6 +19,7 @@ export default function AddActivityPage() {
   const [activityName, setActivityName] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
 
   async function handleSubmit() {
     if (!value && type !== 'muscu') return
@@ -30,13 +31,14 @@ export default function AddActivityPage() {
       activity_name: type === 'muscu' ? 'Séance muscu' : type === 'pas' ? 'Marche / course' : activityName || TYPES.find(t=>t.key===type)?.name,
       value: type === 'muscu' ? 1 : parseInt(value) || 0,
       note,
-      date: new Date().toISOString().split('T')[0]
+      date
     }
 
     const { error } = await addEntry(profile.id, entry)
     if (!error) {
       setSuccess(true)
       setValue(''); setNote(''); setActivityName('')
+      setDate(new Date().toISOString().split('T')[0])
       setTimeout(() => setSuccess(false), 2500)
       refreshProfile()
     }
@@ -49,6 +51,9 @@ export default function AddActivityPage() {
     fontSize:'16px', fontFamily:'DM Sans, sans-serif', outline:'none'
   }
 
+  const today = new Date().toISOString().split('T')[0]
+  const isToday = date === today
+
   return (
     <div>
       <div style={{ padding:'8px 20px 16px' }}>
@@ -56,11 +61,10 @@ export default function AddActivityPage() {
         <div style={{ fontSize:'13px', color:'var(--muted)' }}>Qu'est-ce que tu as fait ?</div>
       </div>
 
-      {/* Types */}
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', padding:'0 16px 16px' }}>
         {TYPES.map(t => (
           <div key={t.key} onClick={() => setType(t.key)}
-            style={{ background:'var(--card)', border:`2px solid ${type===t.key ? 'var(--accent)' : 'var(--border)'}`,
+            style={{ border:`2px solid ${type===t.key ? 'var(--accent)' : 'var(--border)'}`,
               borderRadius:'var(--radius, 16px)', padding:'16px', cursor:'pointer', textAlign:'center', transition:'.2s',
               background: type===t.key ? 'rgba(232,255,71,.06)' : 'var(--card)' }}>
             <div style={{ fontSize:'28px', marginBottom:'6px' }}>{t.icon}</div>
@@ -70,7 +74,13 @@ export default function AddActivityPage() {
         ))}
       </div>
 
-      {/* Formulaire dynamique */}
+      <div style={{ margin:'0 16px 12px' }}>
+        <label style={{ fontSize:'11px', fontWeight:'600', color:'var(--muted)', letterSpacing:'.8px', textTransform:'uppercase', display:'block', marginBottom:'6px' }}>
+          Date {!isToday && <span style={{ color:'var(--accent)', marginLeft:'6px' }}>↩ Saisie rétroactive</span>}
+        </label>
+        <input type="date" value={date} max={today} onChange={e => setDate(e.target.value)} style={{ ...inputStyle, colorScheme:'dark' }} />
+      </div>
+
       {type === 'muscu' && (
         <div style={{ margin:'0 16px 12px' }}>
           <label style={{ fontSize:'11px', fontWeight:'600', color:'var(--muted)', letterSpacing:'.8px', textTransform:'uppercase', display:'block', marginBottom:'6px' }}>Note (optionnel)</label>
@@ -108,7 +118,7 @@ export default function AddActivityPage() {
 
       <button onClick={handleSubmit} disabled={loading}
         style={{ width:'calc(100% - 32px)', margin:'4px 16px', background:'var(--accent)', color:'#000', border:'none', borderRadius:'14px', padding:'16px', fontSize:'16px', fontWeight:'700', fontFamily:'DM Sans, sans-serif', cursor:'pointer', opacity: loading ? .7 : 1 }}>
-        {loading ? '...' : '✓ Enregistrer l\'activité'}
+        {loading ? '...' : "✓ Enregistrer l'activité"}
       </button>
     </div>
   )
