@@ -40,7 +40,7 @@ export default function HomePage() {
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'8px', marginTop:'16px' }}>
           {[
             { val: seancesWeek, lbl: 'séances' },
-            { val: pasWeek >= 1000 ? Math.round(pasWeek/1000)+'k' : pasWeek, lbl: 'pas' },
+            { val: pasWeek.toLocaleString('fr-FR'), lbl: 'pas' },
             { val: annexeWeek, lbl: 'activités' },
           ].map(s => (
             <div key={s.lbl} style={{ background:'var(--bg3)', borderRadius:'12px', padding:'10px', textAlign:'center' }}>

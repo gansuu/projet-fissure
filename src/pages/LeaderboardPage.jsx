@@ -45,7 +45,7 @@ export default function LeaderboardPage() {
       <div style={{ background:'var(--card)', border:'1px solid var(--border)', borderRadius:'var(--radius, 16px)', margin:'0 16px', overflow:'hidden' }}>
         {loading && <div style={{ padding:'24px', textAlign:'center', color:'var(--muted)' }}>Chargement...</div>}
         {sorted.map((u, i) => {
-          const val = tab === 'pas' ? `${Math.round(u[tab]/1000)}k` : u[tab]
+          const val = tab === 'pas' ? u[tab].toLocaleString('fr-FR') : u[tab]
           const unit = TABS.find(t => t.key === tab)?.unit
           return (
             <div key={u.id} onClick={() => setSelectedUser(u)}
