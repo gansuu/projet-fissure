@@ -43,3 +43,7 @@ html, body, #root {
 input { transition: border-color .2s; }
 input:focus { border-color: var(--accent) !important; }
 button:active { opacity: 0.85; transform: scale(0.97); }
+
+:root { color-scheme: dark; }
+[data-theme="light"] { color-scheme: light; }
+input[type="date"] { color-scheme: inherit; }

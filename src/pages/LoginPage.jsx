@@ -6,8 +6,9 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [inviteCode, setInviteCode] = useState('')
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState('')
+  const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState('')
 
   async function handleSubmit() {
@@ -17,7 +18,8 @@ export default function LoginPage() {
       if (error) setError(error.message)
     } else {
       if (!username.trim()) { setError('Choisis un pseudo'); setLoading(false); return }
-      const { error } = await signUp(email, password, username)
+      if (!inviteCode.trim()) { setError("Entre le code d'invitation"); setLoading(false); return }
+      const { error } = await signUp(email, password, username, inviteCode.trim())
       if (error) setError(error.message)
       else setSuccess('Vérifie tes emails pour confirmer ton compte !')
     }
@@ -46,6 +48,14 @@ export default function LoginPage() {
             <label style={{ fontSize:'11px', fontWeight:'600', color:'var(--muted)', letterSpacing:'.8px', textTransform:'uppercase', display:'block', marginBottom:'6px' }}>Pseudo</label>
             <input value={username} onChange={e => setUsername(e.target.value)}
               placeholder="ex: Thomas" style={inputStyle} />
+          </div>
+        )}
+
+        {mode === 'register' && (
+          <div style={{ marginBottom:'12px' }}>
+            <label style={{ fontSize:'11px', fontWeight:'600', color:'var(--muted)', letterSpacing:'.8px', textTransform:'uppercase', display:'block', marginBottom:'6px' }}>Code d'invitation</label>
+            <input value={inviteCode} onChange={e => setInviteCode(e.target.value)}
+              placeholder="ex: FISSURE-XXXXXX" style={inputStyle} autoCapitalize="characters" />
           </div>
         )}
 

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { getProfile } from '../lib/queries'
+import { getProfile, updateProfile } from '../lib/queries'
 
 const AuthContext = createContext(null)
 
@@ -8,6 +8,7 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [theme, setThemeState] = useState('dark')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -25,14 +26,34 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe()
   }, [])
 
+  // Le thème suit le profil et s'applique à toute la page
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+  }, [theme])
+
   async function fetchProfile(userId) {
     const { data } = await getProfile(userId)
     setProfile(data)
+    if (data?.theme === 'light' || data?.theme === 'dark') setThemeState(data.theme)
     setLoading(false)
   }
 
+  async function setTheme(t) {
+    setThemeState(t)
+    if (session) await updateProfile(session.user.id, { theme: t })
+  }
+
+  async function saveProfile(updates) {
+    if (!session) return
+    setProfile(p => ({ ...p, ...updates }))
+    await updateProfile(session.user.id, updates)
+  }
+
   return (
-    <AuthContext.Provider value={{ session, profile, loading, refreshProfile: () => fetchProfile(session?.user?.id) }}>
+    <AuthContext.Provider value={{
+      session, profile, loading, theme, setTheme, saveProfile,
+      refreshProfile: () => fetchProfile(session?.user?.id),
+    }}>
       {children}
     </AuthContext.Provider>
   )
