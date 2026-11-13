@@ -145,3 +145,31 @@ export async function getChallengeLogs(habitIds, from, to) {
     supabase.from('habit_logs').select('*').in('habit_id', habitIds).gte('date', from).lte('date', to)
       .order('date', { ascending: true }).order('id', { ascending: true }))
 }
+
+// ─── SYNCHRONISATIONS ────────────────────────────────
+export async function getSyncTokens(userId) {
+  const { data, error } = await supabase
+    .from('sync_tokens').select('id, habit_id, label, created_at, last_used_at')
+    .eq('user_id', userId).order('created_at', { ascending: false })
+  return { data, error }
+}
+
+export async function createSyncToken(userId, habitId, tokenHash, label) {
+  const { data, error } = await supabase
+    .from('sync_tokens').insert({ user_id: userId, habit_id: habitId, token_hash: tokenHash, label })
+    .select('id, habit_id, label, created_at, last_used_at').single()
+  return { data, error }
+}
+
+export async function deleteSyncToken(id) {
+  const { error } = await supabase.from('sync_tokens').delete().eq('id', id)
+  return { error }
+}
+
+export async function insertLogsBulk(rows) {
+  for (let i = 0; i < rows.length; i += 200) {
+    const { error } = await supabase.from('habit_logs').insert(rows.slice(i, i + 200))
+    if (error) return { error }
+  }
+  return { error: null }
+}

@@ -32,7 +32,12 @@ export function AuthProvider({ children }) {
   }, [theme])
 
   async function fetchProfile(userId) {
-    const { data } = await getProfile(userId)
+    const cacheKey = `fissure:profile:${userId}`
+    let { data } = await getProfile(userId)
+    try {
+      if (data) localStorage.setItem(cacheKey, JSON.stringify(data))
+      else data = JSON.parse(localStorage.getItem(cacheKey)) // hors-ligne : dernier profil connu
+    } catch { /* stockage indisponible */ }
     setProfile(data)
     if (data?.theme === 'light' || data?.theme === 'dark') setThemeState(data.theme)
     setLoading(false)

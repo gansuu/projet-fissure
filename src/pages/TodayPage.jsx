@@ -70,7 +70,7 @@ function HabitRow({ h, day, today, idx, setDayValue }) {
               style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text)', fontSize: '18px', cursor: 'pointer' }}>−</button>
             <input type="number" inputMode="decimal" value={draft ?? (v || '')} placeholder="0"
               onChange={e => setDraft(e.target.value)} onBlur={commit} onKeyDown={e => e.key === 'Enter' && e.target.blur()}
-              style={{ width: '64px', textAlign: 'center', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '10px', padding: '7px 4px', color: 'var(--text)', fontSize: '15px', fontFamily: 'DM Sans, sans-serif', outline: 'none' }} />
+              style={{ width: '78px', textAlign: 'center', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '10px', padding: '7px 2px', color: 'var(--text)', fontSize: '14px', fontFamily: 'DM Sans, sans-serif', outline: 'none' }} />
             <button onClick={() => setDayValue(h, day, v + stepFor(h))}
               style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: 'var(--accent)', color: '#000', fontSize: '18px', fontWeight: '700', cursor: 'pointer' }}>+</button>
           </div>

@@ -1,0 +1,64 @@
+import { useState } from 'react'
+import { Card, SectionTitle, inputStyle, labelStyle } from './Ui'
+
+// Rappel quotidien : un événement répétitif à ajouter à son agenda (iPhone, Android, Google Agenda…).
+// Pas de notification push, donc aucun serveur ni compte supplémentaire.
+function buildIcs(time, url) {
+  const [hh, mm] = time.split(':')
+  const d = new Date()
+  const ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Fissure//Rappel//FR',
+    'CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT',
+    `UID:fissure-rappel-${Date.now()}@fissure`,
+    `DTSTAMP:${stamp}`,
+    `DTSTART:${ymd}T${hh}${mm}00`,
+    `DTEND:${ymd}T${hh}${String(Math.min(59, Number(mm) + 5)).padStart(2, '0')}00`,
+    'RRULE:FREQ=DAILY',
+    'SUMMARY:Fissure : coche tes habitudes',
+    `DESCRIPTION:Ouvre Fissure et coche ta journée. ${url}`,
+    `URL:${url}`,
+    'BEGIN:VALARM',
+    'ACTION:DISPLAY',
+    'DESCRIPTION:Fissure : coche tes habitudes',
+    'TRIGGER:PT0M',
+    'END:VALARM',
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n')
+}
+
+export default function ReminderCard() {
+  const [time, setTime] = useState('21:00')
+
+  function download() {
+    const blob = new Blob([buildIcs(time, window.location.origin)], { type: 'text/calendar;charset=utf-8' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = 'rappel-fissure.ics'
+    a.click()
+    URL.revokeObjectURL(a.href)
+  }
+
+  return (
+    <>
+      <SectionTitle>RAPPEL QUOTIDIEN</SectionTitle>
+      <Card>
+        <div style={{ fontSize: '13px', color: 'var(--muted)', marginBottom: '12px' }}>
+          Ajoute un événement qui se répète chaque jour dans ton agenda : il te rappelle de cocher tes habitudes, avec le lien de l’app.
+        </div>
+        <label style={labelStyle}>Heure du rappel</label>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <input type="time" value={time} onChange={e => setTime(e.target.value || '21:00')} style={{ ...inputStyle, flex: 1 }} />
+          <button onClick={download} style={{ background: 'var(--accent)', color: '#000', border: 'none', borderRadius: '12px', padding: '0 18px', fontWeight: 700, fontSize: '14px', fontFamily: 'DM Sans, sans-serif', cursor: 'pointer' }}>
+            Ajouter
+          </button>
+        </div>
+      </Card>
+    </>
+  )
+}

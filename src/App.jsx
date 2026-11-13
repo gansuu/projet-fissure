@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import { DataProvider } from './context/DataContext'
+import { DataProvider, useData } from './context/DataContext'
 import BottomNav from './components/BottomNav'
 import LoginPage from './pages/LoginPage'
 import TodayPage from './pages/TodayPage'
@@ -9,6 +9,16 @@ import ProgressPage from './pages/ProgressPage'
 import GroupPage from './pages/GroupPage'
 import ProfilePage from './pages/ProfilePage'
 import './styles/globals.css'
+
+function OfflineBanner() {
+  const { online, stale } = useData()
+  if (online && !stale) return null
+  return (
+    <div style={{ background: 'rgba(255,107,53,.15)', borderBottom: '1px solid rgba(255,107,53,.4)', color: 'var(--accent2)', fontSize: '12px', textAlign: 'center', padding: '6px 12px', flexShrink: 0 }}>
+      📴 Hors ligne : tu vois tes dernières données, l’enregistrement est désactivé.
+    </div>
+  )
+}
 
 function AppShell() {
   const { session, loading } = useAuth()
@@ -42,6 +52,8 @@ function AppShell() {
             <div style={{ color: 'var(--muted)', fontSize: '14px', fontWeight: 300 }}>Projet compétition</div>
           </div>
         </div>
+
+        <OfflineBanner />
 
         <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }} className="hide-scroll">
           {screens[screen]}

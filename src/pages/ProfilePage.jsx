@@ -6,6 +6,8 @@ import { todayKey } from '../lib/dates'
 import { prepareHabits, periodScore, activityStreak, pct } from '../lib/scoring'
 import { AVATAR_CHOICES } from '../lib/templates'
 import { SectionTitle, Card, Toggle, GhostButton } from '../components/Ui'
+import SyncPanel from '../components/SyncPanel'
+import ReminderCard from '../components/ReminderCard'
 
 export default function ProfilePage() {
   const { profile, theme, setTheme, saveProfile } = useAuth()
@@ -84,6 +86,9 @@ export default function ProfilePage() {
           <Toggle on={sharedDefault} onChange={on => saveProfile({ default_visibility: on ? 'group' : 'private' })} />
         </div>
       </Card>
+
+      <ReminderCard />
+      <SyncPanel />
 
       {config.invite_code && (
         <>
