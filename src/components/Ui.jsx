@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 export const inputStyle = {
   width: '100%', background: 'var(--card)', border: '1px solid var(--border)',
   borderRadius: '12px', padding: '14px 16px', color: 'var(--text)',
@@ -9,11 +11,65 @@ export const labelStyle = {
   textTransform: 'uppercase', display: 'block', marginBottom: '6px',
 }
 
-export function SectionTitle({ children, right }) {
+// ─── Aide : petit « ? » qui déroule une explication ─────────────
+export function HelpButton({ open, onClick }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '8px 20px 6px' }}>
-      <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '13px', letterSpacing: '2px', color: 'var(--muted)' }}>{children}</div>
-      {right}
+    <button type="button" aria-label="Aide" onClick={onClick}
+      style={{ width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0, padding: 0, cursor: 'pointer',
+        border: `1px solid ${open ? 'var(--accent)' : 'var(--muted2)'}`, background: open ? 'var(--accent)' : 'transparent',
+        color: open ? '#000' : 'var(--muted)', fontSize: '11px', fontWeight: 700, lineHeight: '18px', fontFamily: 'DM Sans, sans-serif' }}>
+      ?
+    </button>
+  )
+}
+
+export function HelpBubble({ children, style }) {
+  return (
+    <div style={{ margin: '0 16px 10px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '12px',
+      padding: '10px 12px', fontSize: '12.5px', lineHeight: 1.55, color: 'var(--text)', ...style }}>
+      {children}
+    </div>
+  )
+}
+
+export function Heading({ children, help }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 20px 12px' }}>
+        <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '32px', letterSpacing: '1px', lineHeight: 1 }}>{children}</div>
+        {help && <HelpButton open={open} onClick={() => setOpen(o => !o)} />}
+      </div>
+      {help && open && <HelpBubble>{help}</HelpBubble>}
+    </>
+  )
+}
+
+export function SectionTitle({ children, right, help }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 20px 6px' }}>
+        <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '13px', letterSpacing: '2px', color: 'var(--muted)' }}>{children}</div>
+        {help && <HelpButton open={open} onClick={() => setOpen(o => !o)} />}
+        {right && <div style={{ marginLeft: 'auto' }}>{right}</div>}
+      </div>
+      {help && open && <HelpBubble>{help}</HelpBubble>}
+    </>
+  )
+}
+
+// Champ de formulaire : libellé + « ? » optionnel
+export function Field({ label, help, children, style }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div style={{ margin: '0 16px 14px', ...style }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+        <label style={{ ...labelStyle, marginBottom: 0 }}>{label}</label>
+        {help && <HelpButton open={open} onClick={() => setOpen(o => !o)} />}
+      </div>
+      {help && open && <HelpBubble style={{ margin: '0 0 8px' }}>{help}</HelpBubble>}
+      {children}
     </div>
   )
 }
@@ -43,14 +99,47 @@ export function Chip({ active, onClick, children, color = 'var(--accent)', textC
   )
 }
 
-export function ChipRow({ children }) {
-  return <div className="hide-scroll" style={{ display: 'flex', gap: '8px', padding: '0 16px 10px', overflowX: 'auto' }}>{children}</div>
+export function ChipRow({ children, style }) {
+  return <div className="hide-scroll" style={{ display: 'flex', gap: '8px', padding: '0 16px 10px', overflowX: 'auto', ...style }}>{children}</div>
 }
 
 export function Toggle({ on, onChange }) {
   return (
     <div onClick={() => onChange(!on)} style={{ width: '48px', height: '26px', background: on ? 'var(--accent)' : 'var(--muted2)', borderRadius: '13px', position: 'relative', cursor: 'pointer', transition: '.3s', flexShrink: 0 }}>
       <div style={{ width: '20px', height: '20px', background: '#fff', borderRadius: '50%', position: 'absolute', top: '3px', left: on ? '25px' : '3px', transition: '.3s' }} />
+    </div>
+  )
+}
+
+// Ligne « libellé  ?  interrupteur »
+export function ToggleRow({ label, help, on, onChange, style }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div style={style}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0' }}>
+        <div style={{ flex: 1, fontSize: '14px', fontWeight: '500' }}>{label}</div>
+        {help && <HelpButton open={open} onClick={() => setOpen(o => !o)} />}
+        <Toggle on={on} onChange={onChange} />
+      </div>
+      {help && open && <HelpBubble style={{ margin: '0 0 8px' }}>{help}</HelpBubble>}
+    </div>
+  )
+}
+
+// Section repliable (profil : options avancées)
+export function Collapsible({ icon, title, help, children }) {
+  const [open, setOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
+  return (
+    <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius, 16px)', margin: '0 16px 10px', overflow: 'hidden' }}>
+      <div onClick={() => setOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 16px', cursor: 'pointer' }}>
+        <div style={{ fontSize: '20px' }}>{icon}</div>
+        <div style={{ flex: 1, fontSize: '15px', fontWeight: '600' }}>{title}</div>
+        {help && <HelpButton open={helpOpen} onClick={e => { e.stopPropagation(); setHelpOpen(o => !o) }} />}
+        <div style={{ color: 'var(--muted)', fontSize: '18px', transform: open ? 'rotate(90deg)' : 'none', transition: '.2s' }}>›</div>
+      </div>
+      {help && helpOpen && <HelpBubble style={{ margin: '0 16px 12px' }}>{help}</HelpBubble>}
+      {open && <div style={{ borderTop: '1px solid var(--border)', padding: '14px 0 6px' }}>{children}</div>}
     </div>
   )
 }

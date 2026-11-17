@@ -124,7 +124,7 @@ export function DataProvider({ children }) {
     const res = id ? await updateHabit(id, fields) : await createHabit(userId, fields)
     if (res.error) { setError("La sauvegarde de l'habitude a échoué."); return false }
     setHabits(prev => (id ? prev.map(h => (h.id === id ? res.data : h)) : [...prev, res.data]))
-    return true
+    return res.data // l'habitude enregistrée (utile pour la créer puis s'en servir tout de suite)
   }
 
   async function removeHabit(id) {

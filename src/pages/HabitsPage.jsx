@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useData } from '../context/DataContext'
 import { targetLabel } from '../lib/scoring'
-import { SectionTitle, PrimaryButton, ErrorBanner } from '../components/Ui'
+import { SectionTitle, PrimaryButton, ErrorBanner, Heading } from '../components/Ui'
 import HabitForm from '../components/HabitForm'
 
 function Row({ h, onEdit, onToggleVisibility }) {
@@ -38,10 +38,7 @@ export default function HabitsPage() {
 
   return (
     <div>
-      <div style={{ padding: '8px 20px 12px' }}>
-        <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '32px', letterSpacing: '1px' }}>MES HABITUDES</div>
-        <div style={{ fontSize: '13px', color: 'var(--muted)' }}>Crée tes habitudes et choisis ce que le groupe voit</div>
-      </div>
+      <Heading help={<>Touche <b>👥 Groupe</b> / <b>🔒 Privée</b> pour choisir qui voit une habitude. Touche <b>⚙︎</b> pour la modifier, l’archiver (l’historique reste) ou la supprimer.</>}>MES HABITUDES</Heading>
 
       <ErrorBanner message={error} onClose={() => setError('')} />
       <PrimaryButton onClick={() => setForm({ habit: null })}>＋ Nouvelle habitude</PrimaryButton>
@@ -50,9 +47,7 @@ export default function HabitsPage() {
       <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius, 16px)', padding: '0 16px', margin: '0 16px 12px' }}>
         {loading && <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '20px 0' }}>Chargement...</div>}
         {!loading && active.length === 0 && (
-          <div style={{ textAlign: 'center', color: 'var(--muted)', fontSize: '13px', padding: '20px 0' }}>
-            Pas encore d’habitude. Appuie sur « Nouvelle habitude » : des modèles (muscu, pas, eau…) sont proposés.
-          </div>
+          <div style={{ textAlign: 'center', color: 'var(--muted)', fontSize: '13px', padding: '18px 0' }}>Aucune habitude</div>
         )}
         {active.map(h => (
           <Row key={h.id} h={h} onEdit={h => setForm({ habit: h })}

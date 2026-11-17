@@ -43,7 +43,7 @@ export default function PlayerModal({ user, habits, onClose }) {
 
       {groupHabits.length === 0 ? (
         <Card><div style={{ textAlign: 'center', color: 'var(--muted)', fontSize: '13px' }}>
-          {user.username} n’a partagé aucune habitude avec le groupe.
+          Aucune habitude partagée
         </div></Card>
       ) : logs === null ? (
         <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '20px' }}>Chargement...</div>
@@ -67,7 +67,7 @@ export default function PlayerModal({ user, habits, onClose }) {
                 </div>
               )
             })}
-            {prepared.length === 0 && <div style={{ fontSize: '13px', color: 'var(--muted)' }}>Pas d’objectif partagé.</div>}
+            {prepared.length === 0 && <div style={{ fontSize: '13px', color: 'var(--muted)' }}>Aucun objectif</div>}
           </Card>
 
           <SectionTitle>PROGRESSION (12 SEMAINES)</SectionTitle>

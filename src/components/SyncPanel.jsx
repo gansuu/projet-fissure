@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useData } from '../context/DataContext'
 import { getSyncTokens, createSyncToken, deleteSyncToken, insertLogsBulk } from '../lib/queries'
-import { findDateLists } from '../lib/importers'
-import { Card, Chip, SectionTitle, GhostButton, PrimaryButton, Sheet, labelStyle } from './Ui'
+import { readImportFile } from '../lib/importers'
+import { Chip, ChipRow, Field, GhostButton, PrimaryButton, Sheet } from './Ui'
 
 const FUNCTION_URL = 'https://rhnibkbqwcflfnuexmnm.supabase.co/functions/v1/steps-webhook'
 
@@ -16,20 +16,21 @@ async function makeToken() {
 }
 
 const code = { fontFamily: 'ui-monospace, Menlo, monospace', fontSize: '12px', background: 'var(--bg3)', borderRadius: '8px', padding: '8px 10px', wordBreak: 'break-all', display: 'block', userSelect: 'all' }
+const linkBtn = { background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '12px', padding: 0, fontFamily: 'DM Sans, sans-serif' }
 
 function copy(text) {
-  try { navigator.clipboard.writeText(text) } catch { /* copie manuelle possible : le texte est sélectionnable */ }
+  try { navigator.clipboard.writeText(text) } catch { /* le texte reste sélectionnable */ }
 }
 
-// ─── Pas : Raccourci iOS ─────────────────────────────
-function StepsSync() {
+// ─── Pas automatiques (Raccourci iOS) ────────────────
+export function StepsSync() {
   const { session } = useAuth()
   const { habits, saveHabit } = useData()
   const userId = session.user.id
   const candidates = habits.filter(h => !h.archived && h.kind === 'count')
   const [tokens, setTokens] = useState([])
   const [habitId, setHabitId] = useState('')
-  const [fresh, setFresh] = useState(null) // { token, habitName }
+  const [fresh, setFresh] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
@@ -38,7 +39,7 @@ function StepsSync() {
 
   async function generate() {
     setError('')
-    if (!habitId) { setError('Choisis l’habitude qui recevra les pas'); return }
+    if (!habitId) return
     setBusy(true)
     const { token, hash } = await makeToken()
     const habit = habits.find(h => h.id === habitId)
@@ -57,78 +58,70 @@ function StepsSync() {
 
   return (
     <>
-      <SectionTitle>PAS AUTOMATIQUES (iPhone)</SectionTitle>
-      <Card>
-        <div style={{ fontSize: '13px', color: 'var(--muted)', marginBottom: '12px' }}>
-          Un Raccourci iOS envoie tes pas de la journée vers Fissure. Sur Android, garde la saisie manuelle (rien de gratuit côté serveur).
-        </div>
-
+      <Field label="Envoyer mes pas depuis l’iPhone"
+        help={<>Un Raccourci iOS envoie tes pas de la journée vers Fissure, chaque soir. Tu génères un jeton, puis tu suis les étapes affichées. Sur Android, saisis tes pas à la main.</>}>
         {candidates.length === 0 ? (
-          <div style={{ fontSize: '13px' }}>
-            Crée d’abord une habitude de type « ＃ Quantité » (modèle « Pas »), puis reviens ici.
-            <GhostButton style={{ width: '100%', margin: '10px 0 0' }} onClick={() => saveHabit({ name: 'Pas', emoji: '👟', kind: 'count', unit: 'pas', target_value: 10000, target_period: 'day', visibility: 'private' })}>
-              ＋ Créer l’habitude « Pas » (10 000 / jour)
-            </GhostButton>
-          </div>
+          <GhostButton style={{ width: '100%', margin: 0 }}
+            onClick={() => saveHabit({ name: 'Pas', emoji: '👟', kind: 'count', unit: 'pas', target_value: 10000, target_period: 'day', visibility: 'private' })}>
+            ＋ Créer l’habitude « Pas »
+          </GhostButton>
         ) : (
           <>
-            <label style={labelStyle}>Habitude qui reçoit les pas</label>
-            <div className="hide-scroll" style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginBottom: '12px' }}>
-              {candidates.map(h => <Chip key={h.id} active={habitId === h.id} onClick={() => setHabitId(h.id)}>{h.emoji} {h.name}</Chip>)}
-            </div>
+            {candidates.length > 1 && (
+              <ChipRow style={{ padding: '0 0 10px' }}>
+                {candidates.map(h => <Chip key={h.id} active={habitId === h.id} onClick={() => setHabitId(h.id)}>{h.emoji} {h.name}</Chip>)}
+              </ChipRow>
+            )}
             <PrimaryButton style={{ width: '100%', margin: 0 }} onClick={generate} disabled={busy}>
-              {busy ? '...' : '🔑 Générer un jeton'}
+              {busy ? '...' : '🔑 Générer mon jeton'}
             </PrimaryButton>
           </>
         )}
         {error && <div style={{ color: '#ff6060', fontSize: '13px', marginTop: '10px' }}>{error}</div>}
+      </Field>
 
-        {tokens.length > 0 && (
-          <div style={{ marginTop: '14px' }}>
-            <label style={labelStyle}>Jetons actifs</label>
-            {tokens.map(t => {
-              const h = habits.find(x => x.id === t.habit_id)
-              return (
-                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0', borderTop: '1px solid var(--border)' }}>
-                  <div style={{ flex: 1, minWidth: 0, fontSize: '13px' }}>
-                    {h?.emoji} {h?.name || 'Habitude'} · {t.label}
-                    <div style={{ fontSize: '11px', color: 'var(--muted)' }}>
-                      {t.last_used_at ? `Dernier envoi : ${new Date(t.last_used_at).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : 'Jamais utilisé'}
-                    </div>
+      {tokens.length > 0 && (
+        <Field label="Jetons actifs">
+          {tokens.map(t => {
+            const h = habits.find(x => x.id === t.habit_id)
+            return (
+              <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0', borderTop: '1px solid var(--border)' }}>
+                <div style={{ flex: 1, minWidth: 0, fontSize: '13px' }}>
+                  {h?.emoji} {h?.name || 'Habitude'}
+                  <div style={{ fontSize: '11px', color: 'var(--muted)' }}>
+                    {t.last_used_at ? `Dernier envoi : ${new Date(t.last_used_at).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : 'Jamais utilisé'}
                   </div>
-                  <div onClick={() => revoke(t)} style={{ fontSize: '12px', color: '#ff6060', cursor: 'pointer', padding: '4px 8px' }}>Révoquer</div>
                 </div>
-              )
-            })}
-          </div>
-        )}
-      </Card>
+                <div onClick={() => revoke(t)} style={{ fontSize: '12px', color: '#ff6060', cursor: 'pointer', padding: '4px 8px' }}>Révoquer</div>
+              </div>
+            )
+          })}
+        </Field>
+      )}
 
       {fresh && (
         <Sheet title="TON JETON" onClose={() => setFresh(null)}>
           <div style={{ padding: '0 20px', fontSize: '13px' }}>
-            <div style={{ color: '#ff6060', marginBottom: '10px' }}>
-              Copie-le maintenant : il ne sera plus jamais affiché. Ne le partage à personne.
-            </div>
+            <div style={{ color: '#ff6060', marginBottom: '10px' }}>Copie-le maintenant : il ne sera plus affiché. Ne le partage pas.</div>
             <code style={code}>{fresh.token}</code>
             <button onClick={() => copy(fresh.token)} style={{ margin: '8px 0 16px', background: 'var(--bg3)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 14px', cursor: 'pointer', fontSize: '13px' }}>
               Copier le jeton
             </button>
 
-            <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '16px', letterSpacing: '1.5px', color: 'var(--muted)', marginBottom: '6px' }}>RACCOURCI iOS (app « Raccourcis »)</div>
-            <ol style={{ paddingLeft: '18px', lineHeight: 1.6, color: 'var(--text)' }}>
-              <li>Nouveau raccourci, action <b>Rechercher des échantillons de santé</b> : type <b>Pas</b>, date de début <b>aujourd’hui</b>.</li>
-              <li>Action <b>Calculer les statistiques</b> : <b>Somme</b> des résultats.</li>
-              <li>Action <b>Obtenir le contenu de l’URL</b> :
-                <div style={{ margin: '4px 0' }}>URL</div><code style={code}>{FUNCTION_URL}</code>
-                <button onClick={() => copy(FUNCTION_URL)} style={{ margin: '4px 0 6px', background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '12px', padding: 0 }}>Copier l’URL</button>
-                <div>Méthode <b>POST</b> · En-tête <b>Authorization</b> = <code style={{ ...code, display: 'inline', padding: '2px 6px' }}>Bearer {'<ton jeton>'}</code></div>
-                <div>Corps de la requête <b>JSON</b> : champ <b>steps</b> (nombre) = le résultat de la somme.</div>
+            <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '16px', letterSpacing: '1.5px', color: 'var(--muted)', marginBottom: '6px' }}>DANS L’APP « RACCOURCIS »</div>
+            <ol style={{ paddingLeft: '18px', lineHeight: 1.6 }}>
+              <li><b>Rechercher des échantillons de santé</b> : type <b>Pas</b>, début <b>aujourd’hui</b>.</li>
+              <li><b>Calculer les statistiques</b> : <b>Somme</b>.</li>
+              <li><b>Obtenir le contenu de l’URL</b> : méthode <b>POST</b>.
+                <code style={{ ...code, margin: '4px 0' }}>{FUNCTION_URL}</code>
+                <button onClick={() => copy(FUNCTION_URL)} style={linkBtn}>Copier l’URL</button>
+                <div style={{ marginTop: '4px' }}>En-tête <b>Authorization</b> : <code style={{ ...code, display: 'inline', padding: '2px 6px' }}>Bearer {'<jeton>'}</code></div>
+                <div>Corps <b>JSON</b> : <b>steps</b> = la somme.</div>
               </li>
-              <li>Onglet <b>Automatisation</b> → Heure du jour (ex. 22 h) → <b>Exécuter le raccourci</b>, sans confirmation.</li>
+              <li><b>Automatisation</b> → heure du jour (ex. 22 h) → exécuter le raccourci sans confirmation.</li>
             </ol>
             <div style={{ color: 'var(--muted)', fontSize: '12px', marginTop: '8px' }}>
-              Habitude cible : {fresh.habitName}. Chaque envoi remplace la valeur du jour (pas de doublon). Au premier essai, compare le total avec l’app Santé : si Apple Watch et iPhone comptent deux fois, dis-le-moi. Le nom exact des actions peut varier selon la version d’iOS.
+              Les pas arrivent dans « {fresh.habitName} ». Chaque envoi remplace la valeur du jour. Au premier essai, compare avec l’app Santé.
             </div>
           </div>
         </Sheet>
@@ -137,34 +130,32 @@ function StepsSync() {
   )
 }
 
-// ─── Import Basic-Fit (JSON) ─────────────────────────
-function BasicFitImport() {
+// ─── Import Basic-Fit : un bouton, un fichier ────────
+export function BasicFitImport() {
   const { session } = useAuth()
-  const { habits, logs, startDate, reload } = useData()
+  const { habits, logs, startDate, reload, saveHabit } = useData()
   const userId = session.user.id
   const checkHabits = habits.filter(h => !h.archived && h.kind === 'check')
-  const [lists, setLists] = useState(null)
-  const [fileName, setFileName] = useState('')
-  const [pick, setPick] = useState(0)
   const [habitId, setHabitId] = useState('')
+  const target = habitId || checkHabits[0]?.id || '__new__'
+  const [lists, setLists] = useState(null)
+  const [pick, setPick] = useState(0)
+  const [showLists, setShowLists] = useState(false)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
   const [error, setError] = useState('')
-
-  useEffect(() => { if (!habitId && checkHabits[0]) setHabitId(checkHabits[0].id) }, [checkHabits, habitId])
 
   async function onFile(e) {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
-    setError(''); setMsg(''); setLists(null)
+    setError(''); setMsg(''); setLists(null); setShowLists(false)
     try {
-      const json = JSON.parse(await file.text())
-      const found = findDateLists(json)
-      if (!found.length) { setError('Aucune liste de dates reconnue dans ce fichier. Envoie-moi un extrait (sans infos perso) et j’adapterai l’import.'); return }
-      setFileName(file.name); setPick(0); setLists(found)
-    } catch {
-      setError('Ce fichier n’est pas un JSON valide.')
+      const found = await readImportFile(file)
+      if (!found.length) { setError('Je ne trouve aucune date dans ce fichier. Vérifie que c’est bien l’export de tes visites.'); return }
+      setPick(0); setLists(found)
+    } catch (err) {
+      setError(err.message || 'Fichier illisible.')
     }
   }
 
@@ -172,77 +163,81 @@ function BasicFitImport() {
     if (!lists || !lists[pick]) return null
     const all = lists[pick].dates
     const recent = all.filter(d => d >= startDate)
-    const existing = new Set(logs.filter(l => l.habit_id === habitId).map(l => l.date))
+    const existing = new Set(logs.filter(l => l.habit_id === target).map(l => l.date))
     const toAdd = recent.filter(d => !existing.has(d))
-    return { all: all.length, old: all.length - recent.length, dup: recent.length - toAdd.length, toAdd }
-  }, [lists, pick, habitId, logs, startDate])
+    return { old: all.length - recent.length, dup: recent.length - toAdd.length, toAdd }
+  }, [lists, pick, target, logs, startDate])
 
   async function run() {
-    if (!plan || !plan.toAdd.length || !habitId) return
+    if (!plan || !plan.toAdd.length) return
     setBusy(true); setError('')
-    const { error } = await insertLogsBulk(plan.toAdd.map(date => ({ user_id: userId, habit_id: habitId, date, value: 1, note: 'import Basic-Fit' })))
+    let id = target
+    if (id === '__new__') {
+      const created = await saveHabit({ name: 'Muscu', emoji: '💪', kind: 'check', unit: null, target_value: 4, target_period: 'week', visibility: 'private' })
+      if (!created) { setBusy(false); setError('Impossible de créer l’habitude « Muscu ».'); return }
+      id = created.id
+    }
+    const { error } = await insertLogsBulk(plan.toAdd.map(date => ({ user_id: userId, habit_id: id, date, value: 1, note: 'import Basic-Fit' })))
     setBusy(false)
-    if (error) { setError('L’import a échoué (rien n’est garanti importé, vérifie ton historique).'); reload(); return }
-    setMsg(`${plan.toAdd.length} séance${plan.toAdd.length > 1 ? 's' : ''} importée${plan.toAdd.length > 1 ? 's' : ''} ✓`)
+    if (error) { setError('L’import a échoué. Vérifie ton historique avant de réessayer.'); reload(); return }
+    const n = plan.toAdd.length
+    setMsg(`${n} séance${n > 1 ? 's' : ''} importée${n > 1 ? 's' : ''} ✓`)
     setLists(null)
     reload()
   }
 
+  const n = plan?.toAdd.length || 0
+
   return (
-    <>
-      <SectionTitle>IMPORT BASIC-FIT</SectionTitle>
-      <Card>
-        <div style={{ fontSize: '13px', color: 'var(--muted)', marginBottom: '12px' }}>
-          Dans l’app My Basic-Fit, télécharge tes données (menu « Mes informations »), puis choisis le fichier JSON ici. Rien n’est importé avant ta validation.
-        </div>
+    <Field label="Mes séances Basic-Fit"
+      help={<>
+        <b>1.</b> Dans l’appli ou le site <b>My Basic-Fit</b>, demande ou télécharge tes données personnelles (menu « Mes informations »).<br />
+        <b>2.</b> Tu reçois un fichier (<b>.json</b>, parfois dans un <b>.zip</b>).<br />
+        <b>3.</b> Touche « Choisir mon fichier » ci-dessous et sélectionne-le.<br />
+        <span style={{ color: 'var(--muted)' }}>Les noms de menus peuvent changer. Pas de fichier ? Ajoute tes séances à la main depuis « Aujourd’hui ».</span>
+      </>}>
+      {checkHabits.length > 1 && (
+        <ChipRow style={{ padding: '0 0 10px' }}>
+          {checkHabits.map(h => <Chip key={h.id} active={target === h.id} onClick={() => setHabitId(h.id)}>{h.emoji} {h.name}</Chip>)}
+        </ChipRow>
+      )}
+      <label style={{ display: 'block', textAlign: 'center', background: 'var(--accent)', color: '#000', borderRadius: '14px', padding: '14px', cursor: 'pointer', fontSize: '15px', fontWeight: 700 }}>
+        📂 Choisir mon fichier
+        <input type="file" onChange={onFile} style={{ display: 'none' }} />
+      </label>
 
-        {checkHabits.length === 0 ? (
-          <div style={{ fontSize: '13px' }}>Crée d’abord une habitude « ✓ Fait / pas fait » (modèle « Muscu ») pour recevoir tes séances.</div>
-        ) : (
-          <>
-            <label style={labelStyle}>Habitude qui reçoit les séances</label>
-            <div className="hide-scroll" style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginBottom: '12px' }}>
-              {checkHabits.map(h => <Chip key={h.id} active={habitId === h.id} onClick={() => setHabitId(h.id)}>{h.emoji} {h.name}</Chip>)}
-            </div>
-            <label style={{ display: 'block', textAlign: 'center', background: 'var(--bg3)', border: '1px dashed var(--border)', borderRadius: '12px', padding: '14px', cursor: 'pointer', fontSize: '14px' }}>
-              📂 Choisir le fichier JSON
-              <input type="file" accept=".json,application/json" onChange={onFile} style={{ display: 'none' }} />
-            </label>
-          </>
-        )}
+      {error && <div style={{ color: '#ff6060', fontSize: '13px', marginTop: '10px' }}>{error}</div>}
+      {msg && <div style={{ color: 'var(--accent)', fontSize: '14px', marginTop: '10px', fontWeight: 600 }}>{msg}</div>}
 
-        {error && <div style={{ color: '#ff6060', fontSize: '13px', marginTop: '10px' }}>{error}</div>}
-        {msg && <div style={{ color: 'var(--accent)', fontSize: '13px', marginTop: '10px', fontWeight: 600 }}>{msg}</div>}
-
-        {lists && plan && (
-          <div style={{ marginTop: '14px' }}>
-            <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '6px' }}>{fileName} : choisis la liste qui correspond à tes visites</div>
-            {lists.slice(0, 6).map((l, i) => (
-              <div key={l.path} onClick={() => setPick(i)}
-                style={{ padding: '8px 10px', borderRadius: '10px', marginBottom: '6px', cursor: 'pointer', fontSize: '12px', border: `1px solid ${pick === i ? 'var(--accent)' : 'var(--border)'}`, background: pick === i ? 'rgba(232,255,71,.06)' : 'transparent' }}>
-                <b>{l.path}</b> · {l.dates.length} jour{l.dates.length > 1 ? 's' : ''} ({l.dates[0]} → {l.dates[l.dates.length - 1]})
-              </div>
-            ))}
-            <div style={{ fontSize: '13px', margin: '10px 0', lineHeight: 1.6 }}>
-              <b style={{ color: 'var(--accent)' }}>{plan.toAdd.length}</b> à importer
-              {plan.old > 0 && <> · {plan.old} avant le lancement du projet ({startDate}) ignorées</>}
-              {plan.dup > 0 && <> · {plan.dup} déjà présentes ignorées</>}
-            </div>
-            <PrimaryButton style={{ width: '100%', margin: 0 }} onClick={run} disabled={busy || !plan.toAdd.length}>
-              {busy ? '...' : `Importer ${plan.toAdd.length} séance${plan.toAdd.length > 1 ? 's' : ''}`}
-            </PrimaryButton>
+      {lists && plan && (
+        <div style={{ marginTop: '12px' }}>
+          <div style={{ fontSize: '14px', marginBottom: '4px' }}>
+            <b style={{ color: 'var(--accent)', fontSize: '20px' }}>{n}</b> séance{n > 1 ? 's' : ''} à importer
+            {target === '__new__' && <span style={{ color: 'var(--muted)' }}> · dans une nouvelle habitude « Muscu »</span>}
           </div>
-        )}
-      </Card>
-    </>
-  )
-}
-
-export default function SyncPanel() {
-  return (
-    <>
-      <StepsSync />
-      <BasicFitImport />
-    </>
+          {(plan.old > 0 || plan.dup > 0) && (
+            <div style={{ fontSize: '11px', color: 'var(--muted)', marginBottom: '8px' }}>
+              {plan.old > 0 && `${plan.old} avant le lancement du projet ignorée${plan.old > 1 ? 's' : ''}`}
+              {plan.old > 0 && plan.dup > 0 && ' · '}
+              {plan.dup > 0 && `${plan.dup} déjà présente${plan.dup > 1 ? 's' : ''}`}
+            </div>
+          )}
+          <PrimaryButton style={{ width: '100%', margin: 0 }} onClick={run} disabled={busy || !n}>
+            {busy ? '...' : `Importer ${n} séance${n > 1 ? 's' : ''}`}
+          </PrimaryButton>
+          {lists.length > 1 && (
+            <div style={{ marginTop: '10px' }}>
+              <button onClick={() => setShowLists(s => !s)} style={linkBtn}>Ce n’est pas ça ? Changer de liste</button>
+              {showLists && lists.slice(0, 6).map((l, i) => (
+                <div key={l.path} onClick={() => setPick(i)}
+                  style={{ padding: '8px 10px', borderRadius: '10px', margin: '6px 0 0', cursor: 'pointer', fontSize: '12px', border: `1px solid ${pick === i ? 'var(--accent)' : 'var(--border)'}` }}>
+                  <b>{l.path}</b> · {l.dates.length} jour{l.dates.length > 1 ? 's' : ''}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </Field>
   )
 }

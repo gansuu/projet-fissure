@@ -5,8 +5,8 @@ import { signOut } from '../lib/queries'
 import { todayKey } from '../lib/dates'
 import { prepareHabits, periodScore, activityStreak, pct } from '../lib/scoring'
 import { AVATAR_CHOICES } from '../lib/templates'
-import { SectionTitle, Card, Toggle, GhostButton } from '../components/Ui'
-import SyncPanel from '../components/SyncPanel'
+import { SectionTitle, Card, ToggleRow, GhostButton, Collapsible, ChipRow } from '../components/Ui'
+import { StepsSync, BasicFitImport } from '../components/SyncPanel'
 import ReminderCard from '../components/ReminderCard'
 
 export default function ProfilePage() {
@@ -36,24 +36,20 @@ export default function ProfilePage() {
 
   return (
     <div>
-      <div style={{ margin: '8px 16px 12px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '20px', padding: '24px 20px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ margin: '8px 16px 12px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '20px', padding: '22px 20px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(232,255,71,.04) 0%, transparent 60%)', pointerEvents: 'none' }} />
-        <div style={{ width: '72px', height: '72px', borderRadius: '50%', fontSize: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', border: '3px solid var(--accent)', background: 'rgba(232,255,71,.1)' }}>
+        <div style={{ width: '72px', height: '72px', borderRadius: '50%', fontSize: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', border: '3px solid var(--accent)', background: 'rgba(232,255,71,.1)' }}>
           {profile?.emoji || '💪'}
         </div>
         <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '28px', letterSpacing: '1px' }}>{profile?.username?.toUpperCase()}</div>
-        <div style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '2px' }}>
-          Projet lancé le {new Date(config.start_date || '2026-01-01').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-        </div>
       </div>
 
-      <SectionTitle>MES STATS</SectionTitle>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', padding: '0 16px 12px' }}>
         {[
           { val: pct(yearScore), lbl: `Score ${year}` },
           { val: `${streak}j`, lbl: 'Série en cours' },
           { val: activeDays, lbl: 'Jours actifs' },
-          { val: habits.filter(h => !h.archived).length, lbl: 'Habitudes actives' },
+          { val: habits.filter(h => !h.archived).length, lbl: 'Habitudes' },
         ].map(s => (
           <div key={s.lbl} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius, 16px)', padding: '14px' }}>
             <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '28px', color: 'var(--accent)' }}>{s.val}</div>
@@ -62,42 +58,48 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      <SectionTitle>AVATAR</SectionTitle>
-      <div className="hide-scroll" style={{ display: 'flex', gap: '8px', padding: '0 16px 12px', overflowX: 'auto' }}>
+      <ChipRow style={{ paddingBottom: '12px' }}>
         {AVATAR_CHOICES.map(e => (
           <div key={e} onClick={() => saveProfile({ emoji: e })}
             style={{ width: '46px', height: '46px', borderRadius: '50%', fontSize: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer', background: profile?.emoji === e ? 'rgba(232,255,71,.15)' : 'var(--card)', border: `2px solid ${profile?.emoji === e ? 'var(--accent)' : 'var(--border)'}` }}>
             {e}
           </div>
         ))}
-      </div>
+      </ChipRow>
 
-      <SectionTitle>PARAMÈTRES</SectionTitle>
-      <Card style={{ padding: '6px 14px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
-          <span style={{ fontSize: '14px' }}>{isDark ? '🌙' : '☀️'} Thème {isDark ? 'sombre' : 'clair'}</span>
-          <Toggle on={isDark} onChange={on => setTheme(on ? 'dark' : 'light')} />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '10px 0' }}>
-          <div>
-            <div style={{ fontSize: '14px' }}>{sharedDefault ? '👥' : '🔒'} Nouvelles habitudes</div>
-            <div style={{ fontSize: '12px', color: 'var(--muted)' }}>{sharedDefault ? 'Partagées avec le groupe par défaut' : 'Privées par défaut'}</div>
-          </div>
-          <Toggle on={sharedDefault} onChange={on => saveProfile({ default_visibility: on ? 'group' : 'private' })} />
-        </div>
+      <Card style={{ padding: '2px 14px' }}>
+        <ToggleRow label={isDark ? '🌙 Thème sombre' : '☀️ Thème clair'} on={isDark} onChange={on => setTheme(on ? 'dark' : 'light')}
+          style={{ borderBottom: '1px solid var(--border)' }} />
+        <ToggleRow label={sharedDefault ? '👥 Nouvelles habitudes : groupe' : '🔒 Nouvelles habitudes : privées'}
+          help={<>Réglage par défaut quand tu crées une habitude. Tu peux le changer habitude par habitude.</>}
+          on={sharedDefault} onChange={on => saveProfile({ default_visibility: on ? 'group' : 'private' })} />
       </Card>
 
-      <ReminderCard />
-      <SyncPanel />
+      <SectionTitle>CONNEXIONS</SectionTitle>
+      <Collapsible icon="🏋️" title="Importer Basic-Fit"
+        help={<>Ajoute d’un coup tes anciennes séances à partir du fichier de données que Basic-Fit te fournit.</>}>
+        <BasicFitImport />
+      </Collapsible>
+      <Collapsible icon="👟" title="Pas automatiques (iPhone)"
+        help={<>Envoie tes pas chaque soir grâce à un Raccourci iOS. Non disponible sur Android.</>}>
+        <StepsSync />
+      </Collapsible>
+      <Collapsible icon="⏰" title="Rappel quotidien"
+        help={<>Un rappel dans ton agenda, tous les jours, pour cocher tes habitudes.</>}>
+        <ReminderCard />
+      </Collapsible>
 
       {config.invite_code && (
-        <>
-          <SectionTitle>INVITER UN AMI</SectionTitle>
-          <Card>
-            <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '6px' }}>Code à donner pour s’inscrire :</div>
-            <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '26px', letterSpacing: '2px', color: 'var(--accent)' }}>{config.invite_code}</div>
-          </Card>
-        </>
+        <Card style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted)', letterSpacing: '.8px', textTransform: 'uppercase' }}>Code d’invitation</div>
+            <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '24px', letterSpacing: '2px', color: 'var(--accent)' }}>{config.invite_code}</div>
+          </div>
+          <button onClick={() => { try { navigator.clipboard.writeText(config.invite_code) } catch { /* sélection manuelle */ } }}
+            style={{ background: 'var(--bg3)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 12px', fontSize: '12px', cursor: 'pointer' }}>
+            Copier
+          </button>
+        </Card>
       )}
 
       <GhostButton onClick={exportCsv}>⬇ Exporter mes données (CSV)</GhostButton>

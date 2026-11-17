@@ -4,7 +4,7 @@ import { useData } from '../context/DataContext'
 import { getAllProfiles, getVisibleHabits, getLogsRange } from '../lib/queries'
 import { lastDayOfMonth, MONTHS_SHORT, pad } from '../lib/dates'
 import { norm, fmt } from '../lib/scoring'
-import { Chip, ChipRow, Card } from '../components/Ui'
+import { Chip, ChipRow, Card, Heading } from '../components/Ui'
 import PlayerModal from '../components/PlayerModal'
 import ChallengesPanel from '../components/ChallengesPanel'
 
@@ -76,10 +76,7 @@ export default function GroupPage() {
 
   return (
     <div>
-      <div style={{ padding: '8px 16px 8px' }}>
-        <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '32px', letterSpacing: '1px' }}>GROUPE</div>
-        <div style={{ fontSize: '13px', color: 'var(--muted)' }}>Seules les habitudes partagées sont visibles</div>
-      </div>
+      <Heading help={<>Tu vois uniquement les habitudes que tes amis ont passées en <b>👥 Groupe</b>. Touche un joueur pour voir sa fiche. Pour apparaître ici, passe une de tes habitudes en 👥 Groupe.</>}>GROUPE</Heading>
 
       <ChipRow>
         <Chip active={tab === 'rank'} onClick={() => setTab('rank')}>🏆 Classement</Chip>
@@ -103,7 +100,7 @@ export default function GroupPage() {
 
           {names.length === 0 ? (
             <Card><div style={{ textAlign: 'center', color: 'var(--muted)', fontSize: '13px', padding: '12px 0' }}>
-              Personne n’a encore partagé d’habitude. Passe une de tes habitudes en « 👥 Groupe » pour apparaître ici.
+              Aucune habitude partagée
             </div></Card>
           ) : (
             <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius, 16px)', margin: '0 16px 16px', overflow: 'hidden' }}>

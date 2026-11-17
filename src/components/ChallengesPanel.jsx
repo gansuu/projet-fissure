@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { getChallenges, createChallenge, deleteChallenge, getChallengeLogs, getAllProfiles } from '../lib/queries'
 import { todayKey, addDays, mondayOf, lastDayOfMonth, formatDay, daysLeftLabel } from '../lib/dates'
 import { norm, fmt } from '../lib/scoring'
-import { Card, Bar, Sheet, PrimaryButton, inputStyle, labelStyle, Chip } from './Ui'
+import { Card, Bar, Sheet, PrimaryButton, inputStyle, Chip, Field } from './Ui'
 
 function ChallengeForm({ names, onSave, onClose }) {
   const today = todayKey()
@@ -47,22 +47,19 @@ function ChallengeForm({ names, onSave, onClose }) {
     <Sheet title="NOUVEAU DÉFI" onClose={onClose}>
       {names.length === 0 ? (
         <div style={{ margin: '0 16px 16px', color: 'var(--muted)', fontSize: '13px' }}>
-          Aucune habitude n’est partagée avec le groupe pour l’instant. Passe une habitude en « Groupe » pour lancer un défi dessus.
+          Partage d’abord une habitude avec le groupe (🔒 → 👥) pour lancer un défi dessus.
         </div>
       ) : (
         <>
-          <div style={{ margin: '0 16px 12px' }}>
-            <label style={labelStyle}>Habitude concernée</label>
+          <Field label="Habitude" help={<>Seules les habitudes passées en 👥 Groupe comptent dans un défi.</>}>
             <div className="hide-scroll" style={{ display: 'flex', gap: '8px', overflowX: 'auto' }}>
               {names.map(n => <Chip key={n.key} active={habitName === n.key} onClick={() => setHabitName(n.key)}>{n.emoji} {n.name}</Chip>)}
             </div>
-          </div>
-          <div style={{ margin: '0 16px 12px' }}>
-            <label style={labelStyle}>Objectif total pour tout le groupe</label>
+          </Field>
+          <Field label="Objectif du groupe" help={<>Le total à atteindre par tous les membres réunis, sur la période choisie.</>}>
             <input type="number" inputMode="decimal" value={target} onChange={e => setTarget(e.target.value)} style={inputStyle} />
-          </div>
-          <div style={{ margin: '0 16px 12px' }}>
-            <label style={labelStyle}>Période</label>
+          </Field>
+          <Field label="Période">
             <div style={{ display: 'flex', gap: '8px' }}>
               {[['week', 'Cette semaine'], ['month', 'Ce mois'], ['custom', 'Dates perso']].map(([k, l]) => (
                 <Chip key={k} active={preset === k} color="var(--accent2)" textColor="#fff" onClick={() => setPreset(k)}>{l}</Chip>
@@ -74,14 +71,10 @@ function ChallengeForm({ names, onSave, onClose }) {
                 <input type="date" value={to} onChange={e => setTo(e.target.value)} style={inputStyle} />
               </div>
             )}
-          </div>
-          <div style={{ margin: '0 16px 12px' }}>
-            <label style={labelStyle}>Titre (optionnel)</label>
+          </Field>
+          <Field label="Titre (facultatif)">
             <input value={title} onChange={e => setTitle(e.target.value)} placeholder="ex: 4 séances cette semaine" style={inputStyle} />
-          </div>
-          <div style={{ margin: '0 16px 12px', fontSize: '12px', color: 'var(--muted)' }}>
-            Seules les habitudes visibles par le groupe comptent dans un défi.
-          </div>
+          </Field>
           {error && <div style={{ margin: '0 16px 12px', color: '#ff6060', fontSize: '13px' }}>{error}</div>}
           <PrimaryButton onClick={submit} disabled={saving}>{saving ? '...' : 'Lancer le défi'}</PrimaryButton>
         </>
@@ -144,7 +137,7 @@ export default function ChallengesPanel({ habits }) {
       {challenges === null && <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '20px' }}>Chargement...</div>}
       {challenges?.length === 0 && (
         <Card><div style={{ textAlign: 'center', color: 'var(--muted)', fontSize: '13px' }}>
-          Aucun défi pour l’instant. Exemple : « 4 séances cette semaine pour tout le groupe ».
+          Aucun défi pour l’instant
         </div></Card>
       )}
 

@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { Card, SectionTitle, inputStyle, labelStyle } from './Ui'
+import { Field, inputStyle } from './Ui'
 
 // Rappel quotidien : un événement répétitif à ajouter à son agenda (iPhone, Android, Google Agenda…).
-// Pas de notification push, donc aucun serveur ni compte supplémentaire.
 function buildIcs(time, url) {
   const [hh, mm] = time.split(':')
   const d = new Date()
@@ -45,20 +44,14 @@ export default function ReminderCard() {
   }
 
   return (
-    <>
-      <SectionTitle>RAPPEL QUOTIDIEN</SectionTitle>
-      <Card>
-        <div style={{ fontSize: '13px', color: 'var(--muted)', marginBottom: '12px' }}>
-          Ajoute un événement qui se répète chaque jour dans ton agenda : il te rappelle de cocher tes habitudes, avec le lien de l’app.
-        </div>
-        <label style={labelStyle}>Heure du rappel</label>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <input type="time" value={time} onChange={e => setTime(e.target.value || '21:00')} style={{ ...inputStyle, flex: 1 }} />
-          <button onClick={download} style={{ background: 'var(--accent)', color: '#000', border: 'none', borderRadius: '12px', padding: '0 18px', fontWeight: 700, fontSize: '14px', fontFamily: 'DM Sans, sans-serif', cursor: 'pointer' }}>
-            Ajouter
-          </button>
-        </div>
-      </Card>
-    </>
+    <Field label="Heure du rappel"
+      help={<>Ajoute à ton agenda un événement qui se répète chaque jour : il te rappelle de cocher tes habitudes, avec le lien de l’app.</>}>
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <input type="time" value={time} onChange={e => setTime(e.target.value || '21:00')} style={{ ...inputStyle, flex: 1 }} />
+        <button onClick={download} style={{ background: 'var(--accent)', color: '#000', border: 'none', borderRadius: '12px', padding: '0 18px', fontWeight: 700, fontSize: '14px', fontFamily: 'DM Sans, sans-serif', cursor: 'pointer' }}>
+          Ajouter
+        </button>
+      </div>
+    </Field>
   )
 }

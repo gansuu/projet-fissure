@@ -4,7 +4,7 @@ import { todayKey, addDays, mondayOf, formatDay } from '../lib/dates'
 import {
   prepareHabits, buildSeries, weekScore, periodScore, dayVal, weekSum, targetOf, unitLabel, fmt, pct,
 } from '../lib/scoring'
-import { SectionTitle, Card, Chip, ChipRow, Bar } from '../components/Ui'
+import { SectionTitle, Card, Chip, ChipRow, Bar, Heading } from '../components/Ui'
 import LineChart from '../components/LineChart'
 import Heatmap from '../components/Heatmap'
 
@@ -57,14 +57,11 @@ export default function ProgressPage() {
 
   return (
     <div>
-      <div style={{ padding: '8px 20px 12px' }}>
-        <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '32px', letterSpacing: '1px' }}>MES PROGRÈS</div>
-        <div style={{ fontSize: '13px', color: 'var(--muted)' }}>Part de tes objectifs atteints dans le temps</div>
-      </div>
+      <Heading help={<>La courbe montre la part de tes objectifs atteints (100 % = tout est rempli) : <b>Jour</b> sur 30 jours, <b>Semaine</b> sur 12 semaines, <b>Mois</b> sur 12 mois, <b>Année</b> mois par mois. Dans le calendrier, plus la case est colorée, plus la journée est remplie : touche une case pour le détail.</>}>MES PROGRÈS</Heading>
 
       {noHabits ? (
         <Card><div style={{ textAlign: 'center', color: 'var(--muted)', fontSize: '13px', padding: '12px 0' }}>
-          Crée une habitude avec un objectif pour voir ta courbe de progression.
+          Crée une habitude pour voir ta courbe.
         </div></Card>
       ) : (
         <>
@@ -80,12 +77,11 @@ export default function ProgressPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
               <div>
                 <div style={{ fontSize: '11px', fontWeight: '600', color: 'var(--muted)', letterSpacing: '.8px', textTransform: 'uppercase' }}>
-                  {scale === 'year' ? `Score ${year}` : 'Moyenne affichée'}
+                  {scale === 'year' ? `Score ${year}` : 'Moyenne'}
                 </div>
                 <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '34px', color: 'var(--accent)', lineHeight: 1.1 }}>
                   {pct(scale === 'year' ? yearScore : avg)}
                 </div>
-                <div style={{ fontSize: '11px', color: 'var(--muted)' }}>{SCALES.find(s => s.key === scale).hint}</div>
               </div>
               {scale === 'year' && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -101,9 +97,6 @@ export default function ProgressPage() {
           <SectionTitle>CALENDRIER</SectionTitle>
           <Card style={{ padding: '14px 10px' }}>
             <Heatmap habits={used} idx={idx} today={today} selected={selDay} onSelect={setSelDay} />
-            <div style={{ fontSize: '11px', color: 'var(--muted)', textAlign: 'center', marginTop: '10px' }}>
-              Plus la case est colorée, plus tes objectifs du jour sont remplis.
-            </div>
             {selDay && (
               <div style={{ marginTop: '10px', borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
                 <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '6px' }}>
@@ -127,7 +120,7 @@ export default function ProgressPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '34px', color: 'var(--accent)' }}>{pct(cur)}</div>
               <div style={{ fontSize: '12px', color: delta == null ? 'var(--muted)' : delta >= 0 ? 'var(--accent)' : 'var(--accent2)' }}>
-                {delta == null ? 'Pas de comparaison' : `${delta >= 0 ? '▲ +' : '▼ '}${delta} pts vs semaine dernière`}
+                {delta == null ? '' : `${delta >= 0 ? '▲ +' : '▼ '}${delta} pts vs sem. dernière`}
               </div>
             </div>
             <div style={{ marginTop: '10px' }}>

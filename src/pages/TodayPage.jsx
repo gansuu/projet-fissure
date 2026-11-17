@@ -5,7 +5,7 @@ import { todayKey, addDays, mondayOf, formatDay } from '../lib/dates'
 import {
   prepareHabits, weekScore, activityStreak, habitStreak, dayVal, weekSum, targetOf, unitLabel, fmt, pct,
 } from '../lib/scoring'
-import { SectionTitle, Bar, ErrorBanner, PrimaryButton } from '../components/Ui'
+import { SectionTitle, Bar, ErrorBanner, PrimaryButton, HelpButton, HelpBubble } from '../components/Ui'
 
 function stepFor(h) {
   const t = Number(h.target_value) || 1
@@ -86,12 +86,12 @@ export default function TodayPage({ go }) {
   const { habits, logs, idx, loading, error, setError, setDayValue } = useData()
   const today = todayKey()
   const [day, setDay] = useState(today)
+  const [scoreHelp, setScoreHelp] = useState(false)
 
   const active = habits.filter(h => !h.archived)
   const prepared = useMemo(() => prepareHabits(habits, idx), [habits, idx])
   const mon = mondayOf(day)
   const score = weekScore(prepared, idx, mon, today)
-  const prevScore = weekScore(prepared, idx, addDays(mon, -7), today)
   const streak = useMemo(() => activityStreak(logs, today), [logs, today])
   const isToday = day === today
 
@@ -107,13 +107,14 @@ export default function TodayPage({ go }) {
         </div>
         <div style={{ marginTop: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
-            <div style={{ fontSize: '11px', fontWeight: '600', color: 'var(--muted)', letterSpacing: '.8px', textTransform: 'uppercase' }}>Score de la semaine</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ fontSize: '11px', fontWeight: '600', color: 'var(--muted)', letterSpacing: '.8px', textTransform: 'uppercase' }}>Score de la semaine</div>
+              <HelpButton open={scoreHelp} onClick={() => setScoreHelp(o => !o)} />
+            </div>
             <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '30px', color: 'var(--accent)', lineHeight: 1 }}>{pct(score)}</div>
           </div>
           <Bar ratio={score || 0} height={10} />
-          <div style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '6px' }}>
-            Semaine précédente : {pct(prevScore)}
-          </div>
+          {scoreHelp && <HelpBubble style={{ margin: '10px 0 0' }}>Part de tes objectifs atteints cette semaine : 100 % = tous tes objectifs sont remplis. La comparaison avec les semaines passées est dans « Progrès ».</HelpBubble>}
         </div>
       </div>
 
@@ -126,21 +127,15 @@ export default function TodayPage({ go }) {
           <div style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '22px', letterSpacing: '1px' }}>
             {isToday ? 'AUJOURD’HUI' : formatDay(day, { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}
           </div>
-          {!isToday && <div style={{ fontSize: '11px', color: 'var(--accent)' }}>↩ Saisie rétroactive</div>}
           <input type="date" value={day} max={today} onChange={e => e.target.value && setDay(e.target.value)}
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }} />
         </div>
         <button onClick={() => setDay(addDays(day, 1))} disabled={isToday} style={{ ...navBtn, opacity: isToday ? .3 : 1 }}>▶</button>
       </div>
 
-      <SectionTitle>MES HABITUDES</SectionTitle>
+      <SectionTitle help={<>Coche ou saisis ta journée. Les flèches ◀ ▶ (ou le jour au centre) te permettent de remplir un jour passé. Le 🔒 indique une habitude que toi seul(e) vois.</>}>MES HABITUDES</SectionTitle>
       <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius, 16px)', padding: '4px 16px', margin: '0 16px 16px' }}>
         {loading && <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '20px 0' }}>Chargement...</div>}
-        {!loading && active.length === 0 && (
-          <div style={{ textAlign: 'center', color: 'var(--muted)', fontSize: '13px', padding: '20px 0' }}>
-            Aucune habitude pour l’instant.
-          </div>
-        )}
         {active.map(h => <HabitRow key={h.id} h={h} day={day} today={today} idx={idx} setDayValue={setDayValue} />)}
       </div>
       {!loading && active.length === 0 && <PrimaryButton onClick={() => go('habits')}>＋ Créer ma première habitude</PrimaryButton>}
